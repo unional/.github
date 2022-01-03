@@ -2,6 +2,8 @@ name: typescript-build
 on:
   workflow_call:
     secrets:
+      codecov-token:
+        required: true
       codacy-token:
         required: true
 jobs:
@@ -32,6 +34,8 @@ jobs:
       - run: yarn coverage --maxWorkers=2
       - name: codecov
         uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.codecov-token }}
       - name: codacy
         uses: codacy/codacy-coverage-reporter-action@master
         with:
