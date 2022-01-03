@@ -1,0 +1,6 @@
+{
+  "name": "TypeScript project workflow",
+  "description": "TypeScript standard workflow using yarn, and semantic release",
+  "categories": ["TypeScript", "Semantic Release"],
+  "filePatterns": ["package.json"]
+}
