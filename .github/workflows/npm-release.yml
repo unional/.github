@@ -4,12 +4,8 @@ on:
     secrets:
       npm-token:
         required: true
-  push:
-    branches:
-      - $default-branch
 jobs:
   npm:
-    name: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

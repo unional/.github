@@ -2,7 +2,7 @@ name: typescript-test
 on:
   workflow_call:
 jobs:
-  typescript-test:
+  typescript:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
