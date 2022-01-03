@@ -20,7 +20,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: cache yarn global cache
-        if: runner.os != 'macos-latest'
         uses: actions/cache@v2
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
