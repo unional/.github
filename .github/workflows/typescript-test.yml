@@ -10,8 +10,6 @@ jobs:
         node-version: [12, 14, 16]
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
       - name: setup yarn-cache
         id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"
