@@ -25,11 +25,7 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn
-      - run: yarn lint
-      - run: yarn build
-      - run: yarn size-limit
-      - run: yarn dependency-check
-      - run: yarn coverage --maxWorkers=2
+      - run: yarn verify
       - name: codecov
         uses: codecov/codecov-action@v2
       - name: codacy
