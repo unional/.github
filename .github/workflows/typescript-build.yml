@@ -25,7 +25,7 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn
-      - run: yarn verify
+      - run: yarn verify -l --aggregate-output
       - name: codecov
         uses: codecov/codecov-action@v2
       - name: codacy
