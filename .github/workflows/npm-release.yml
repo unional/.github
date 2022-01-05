@@ -8,6 +8,8 @@ jobs:
   npm:
     runs-on: ubuntu-latest
     steps:
+      - run: git config --global core.eol LF
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0

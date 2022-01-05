@@ -9,6 +9,8 @@ jobs:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
         node-version: [12, 14, 16]
     steps:
+      - run: git config --global core.eol LF
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v2
       - name: setup yarn-cache
         id: yarn-cache
