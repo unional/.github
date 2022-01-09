@@ -1,6 +1,6 @@
 # Security
 
-Security is of atmost importance to all packages I worked on.
+Security is of utmost importance to all packages I worked on.
 
 ## Reporting a Vulnerability
 
