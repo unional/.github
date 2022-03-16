@@ -10,7 +10,7 @@ jobs:
     steps:
       - run: git config --global core.eol LF
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: setup yarn-cache
