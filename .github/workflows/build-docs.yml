@@ -29,7 +29,8 @@ jobs:
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn
       - run: yarn build:doc
-      - run: peter-evans/create-pull-request@v3
+      - name: create pull request
+        uses: peter-evans/create-pull-request@v3
         with:
           commit-message: Update Documentation
           committer: Unional <noreply@github.com>
