@@ -11,8 +11,9 @@ jobs:
       - run: git config --global core.eol LF
       - run: git config --global core.autocrlf false
       - uses: actions/checkout@v3
-      - name: install rush
+      - name: rush install
         run: node common/scripts/install-run-rush.js install --bypass-policy
-      - run: rush install
-      - run: rush build
-      - run: rush test
+      - name: rush build
+        run: node common/scripts/install-run-rush.js build
+      - name: rush test
+        run: node common/scripts/install-run-rush.js test

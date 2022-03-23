@@ -14,10 +14,12 @@ jobs:
       # - uses: actions/checkout@v3
       #   with:
       #     fetch-depth: 0
-      # - name: install rush
+      # - name: rush install
       #   run: node common/scripts/install-run-rush.js install --bypass-policy
-      # - run: rush install
-      # - run: rush build
+      # - name: rush build
+      #   run: node common/scripts/install-run-rush.js build
+      # - name: rush test
+      #   run: node common/scripts/install-run-rush.js test
 
       # - name: setup yarn-cache
       #   id: yarn-cache
