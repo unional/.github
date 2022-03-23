@@ -12,6 +12,19 @@ jobs:
       - run: git config --global core.eol LF
       - run: git config --global core.autocrlf false
       - uses: actions/checkout@v3
+      - name: cache rush
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-rush-${{ hashFIles('rush.json') }}
+          path: |
+            common/temp/install-run
+            ~/.rush
+      - name: cache pnpm
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-rush-${{ hashFiles('common/config/rush/pnpm-lock.yaml')}}
+          path: |
+            common/temp/pnpm-store
       - name: rush install
         run: node common/scripts/install-run-rush.js install --bypass-policy
       - name: rush test
