@@ -1,0 +1,40 @@
+name: npm-release
+on:
+  workflow_call:
+    secrets:
+      npm-token:
+        required: true
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - run: git config --global core.eol LF
+      - run: git config --global core.autocrlf false
+      - run: echo no release yet
+      # - uses: actions/checkout@v3
+      #   with:
+      #     fetch-depth: 0
+      # - name: setup yarn-cache
+      #   id: yarn-cache
+      #   run: echo "::set-output name=dir::$(yarn cache dir)"
+      # - name: cache yarn global cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ${{ steps.yarn-cache.outputs.dir }}
+      #     key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-yarn-
+      # - uses: actions/download-artifact@v3
+      # - name: cache node_modules
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: node_modules
+      #     key: ${{ runner.os }}-node-modules-${{ hashFiles('**/yarn.lock') }}
+      # - run: yarn
+      # # just in case the project didn't place the files under the cjs/esm folder
+      # - run: yarn build
+      # - run: yarn add -D --no-lockfile @semantic-release/changelog
+      # - run: yarn release
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     NPM_TOKEN: ${{ secrets.npm-token }}
