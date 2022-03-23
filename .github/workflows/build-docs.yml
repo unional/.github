@@ -30,7 +30,7 @@ jobs:
       - run: yarn
       - run: yarn build:doc
       - name: create pull request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
           title: Update Documentation by create-pull-request action
           add-paths: |
