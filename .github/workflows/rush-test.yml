@@ -13,6 +13,6 @@ jobs:
       - run: git config --global core.autocrlf false
       - uses: actions/checkout@v3
       - name: install rush
-        run: node common/scripts/install-run-rush.js install
+        run: node common/scripts/install-run-rush.js install --bypass-policy
       - run: rush install
       - run: rush test
