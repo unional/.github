@@ -29,12 +29,8 @@ jobs:
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn
       - run: yarn build:doc
-      - name: create pull request
-        uses: peter-evans/create-pull-request@v3
+      - name: publish docs
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          title: Update Documentation by create-pull-request action
-          add-paths: |
-            docs
-          commit-message: Update Documentation
-          committer: Unional <noreply@github.com>
-          base: docs
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
