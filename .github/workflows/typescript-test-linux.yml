@@ -1,0 +1,35 @@
+name: typescript-test
+on:
+  workflow_call:
+jobs:
+  typescript:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node-version: [12, 14, 16]
+    steps:
+      - run: git config --global core.eol LF
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v3
+      - name: setup yarn-cache
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: cache yarn global cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
+      - run: yarn --ignore-engines
+      - run: yarn test --maxWorkers=2
