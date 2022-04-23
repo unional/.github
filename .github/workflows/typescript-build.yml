@@ -30,19 +30,3 @@ jobs:
       - run: yarn verify -l --aggregate-output
       - name: codecov
         uses: codecov/codecov-action@v2
-      # - name: codacy
-      #   uses: codacy/codacy-coverage-reporter-action@v1
-      #   with:
-      #     project-token: ${{ secrets.codacy-token }}
-      #     coverage-reports: coverage/clover.xml
-      - name: upload cjs folder
-        uses: actions/upload-artifact@v3
-        with:
-          name: cjs
-          path: cjs
-      - name: upload esm folder
-        uses: actions/upload-artifact@v3
-        with:
-          name: esm
-          path: esm
-
