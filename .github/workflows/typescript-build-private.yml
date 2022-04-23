@@ -35,7 +35,7 @@ jobs:
       - run: yarn dependency-check
       - run: yarn coverage --maxWorkers=2
       - name: codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.codecov-token }}
       - name: codacy
