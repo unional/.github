@@ -1,6 +1,9 @@
 name: yarn2-library-verify
 on:
   workflow_call:
+    secrets:
+      npm-token:
+        required: false
 jobs:
   verify:
     runs-on: ${{ matrix.os }}
@@ -23,3 +26,32 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: "**/coverage/clover.xml"
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.npm-token }}
+    needs: [verify]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: yarn
+
+      - name: Install Dependencies
+        run: yarn --immutable
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          # This expects you to have a script called release which does a build for your packages and calls changeset publish
+          publish: yarn release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.npm-token }}
+
+      # - name: Send a Slack notification if a publish happens
+      #   if: steps.changesets.outputs.published == 'true'
+      #   # You can do something when a publish happens.
+      #   run: my-slack-bot send-notification --message "A new version of ${GITHUB_REPOSITORY} was published!"
