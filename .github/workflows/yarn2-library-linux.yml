@@ -28,7 +28,9 @@ jobs:
           files: "**/coverage/clover.xml"
   release:
     runs-on: ubuntu-latest
-    if: secrets.npm-token
+    env:
+      has_token: ${{ !!secrets.npm-token }}
+    if: env.has_token
     needs: [verify]
     steps:
       - uses: actions/checkout@v3
