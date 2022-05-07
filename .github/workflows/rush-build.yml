@@ -14,7 +14,7 @@ jobs:
       - name: cache rush
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-rush-${{ hashFIles('rush.json') }}
+          key: ${{ runner.os }}-rush-${{ hashFiles('rush.json') }}
           path: |
             common/temp/install-run
             ~/.rush
