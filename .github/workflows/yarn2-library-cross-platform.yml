@@ -2,12 +2,12 @@ name: yarn2-library-verify
 on:
   workflow_call:
 jobs:
-  test:
+  verify:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node-version: [14, 18]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [14, 16, 18]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -19,3 +19,7 @@ jobs:
           cache: yarn
       - run: yarn --immutable
       - run: yarn verify
+      - name: codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: "**/coverage/clover.xml"
