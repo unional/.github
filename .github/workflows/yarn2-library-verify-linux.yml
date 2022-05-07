@@ -1,0 +1,31 @@
+name: yarn2-library-verify
+on:
+  workflow_call:
+jobs:
+  verify:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [14, 16, 18]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+
+      - name: Install Dependencies
+        run: yarn --immutable
+
+      - name: Verify
+        run: yarn verify
+
+      - name: codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: "**/coverage/clover.xml"

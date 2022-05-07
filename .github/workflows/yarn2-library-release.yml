@@ -1,39 +1,17 @@
-name: yarn2-library-verify
+name: yarn2-library-release
 on:
   workflow_call:
     secrets:
       npm-token:
-        required: false
+        required: true
 jobs:
-  verify:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [14, 16, 18]
+  release:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: yarn
-      - run: yarn --immutable
-      - run: yarn verify
-      - name: codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: "**/coverage/clover.xml"
-  release:
-    runs-on: ubuntu-latest
-    env:
-      has_token: ${{ !!secrets.npm-token }}
-    if: env.has_token
-    needs: [verify]
-    steps:
-      - uses: actions/checkout@v3
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
