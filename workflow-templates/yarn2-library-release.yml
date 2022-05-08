@@ -1,0 +1,13 @@
+name: release
+on:
+  push:
+    branches:
+      - $default-branch
+jobs:
+  code:
+    uses: justland/.github/.github/workflows/yarn2-library-verify-linux.yml@main
+
+  release:
+    uses: justland/.github/.github/workflows/yarn2-library-release.yml@main
+    needs: code
+    secrets: inherit

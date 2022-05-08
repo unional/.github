@@ -1,0 +1,6 @@
+{
+  "name": "Yarn2 repository PR workflow",
+  "description": "Yarn2 PR workflow with codecov",
+  "categories": ["yarn", "codecov", "changesets"],
+  "filePatterns": ["package.json"]
+}

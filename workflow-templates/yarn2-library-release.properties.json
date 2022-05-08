@@ -1,0 +1,6 @@
+{
+  "name": "Yarn2 repository release workflow",
+  "description": "Yarn2 release workflow with codecov and changesets",
+  "categories": ["yarn", "codecov", "changesets"],
+  "filePatterns": ["package.json"]
+}
