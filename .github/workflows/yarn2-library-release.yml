@@ -1,6 +1,9 @@
 name: yarn2-library-release
 on:
   workflow_call:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
