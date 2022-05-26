@@ -26,5 +26,5 @@ jobs:
       - name: codecov
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 16
         uses: codecov/codecov-action@v3
-        with:
-          files: "**/coverage/clover.xml"
+        # with:
+        #   files: "**/coverage/clover.xml"
