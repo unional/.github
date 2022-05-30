@@ -18,8 +18,7 @@ jobs:
       - name: Install Dependencies
         run: yarn
       - run: yarn build
-      - run: yarn add -D --no-lockfile @semantic-release/changelog
-      - run: npx semantic-release
+      - run: yarn semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
