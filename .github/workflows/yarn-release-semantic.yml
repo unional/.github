@@ -21,7 +21,8 @@ jobs:
       - name: Install Dependencies
         run: yarn
       - run: yarn build
-      - run: yarn semantic-release
+      - name: semantic-release without GitHub Token
+        run: yarn semantic-release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
