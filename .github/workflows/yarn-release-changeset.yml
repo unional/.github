@@ -8,7 +8,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      YARN_ENABLE_IMMUTABLE_INSTALL: false
+      YARN_ENABLE_IMMUTABLE_INSTALLS: false
     steps:
       - uses: actions/checkout@v3
 
