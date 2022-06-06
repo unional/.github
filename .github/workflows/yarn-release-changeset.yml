@@ -7,6 +7,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      YARN_ENABLE_IMMUTABLE_INSTALL: false
     steps:
       - uses: actions/checkout@v3
 

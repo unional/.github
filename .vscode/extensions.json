@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "bierner.emojisense",
+    "DavidAnson.vscode-markdownlint",
+    "editorconfig.editorconfig",
+    "github.vscode-pull-request-github",
+    "redhat.vscode-yaml",
+    "valentjn.vscode-ltex",
+    "yzhang.markdown-all-in-one"
+  ]
+}
