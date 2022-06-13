@@ -1,0 +1,26 @@
+name: build-docs
+on:
+  workflow_call:
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - run: git config --global core.eol LF
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: yarn
+
+      - uses: actions/download-artifact@v2
+      - run: yarn
+      - run: yarn build:doc
+      - name: publish docs
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
