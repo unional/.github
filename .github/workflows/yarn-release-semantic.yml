@@ -16,8 +16,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          # some recent problem with caching: getCacheEntry failed: Cache service responded with 503
-          # cache: yarn
+          cache: yarn
 
       - name: Install Dependencies
         run: yarn
