@@ -18,7 +18,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
-
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Install Dependencies
         run: pnpm install
 
