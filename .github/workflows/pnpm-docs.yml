@@ -17,7 +17,7 @@ jobs:
           node-version: 16
           cache: pnpm
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
       - run: pnpm install
       - run: pnpm build:doc
       - name: publish docs
