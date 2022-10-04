@@ -16,7 +16,6 @@ jobs:
           node-version: 16
           cache: yarn
 
-      - uses: actions/download-artifact@v3
       - run: yarn
       - run: yarn build:doc
       - name: publish docs
