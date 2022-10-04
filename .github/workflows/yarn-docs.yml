@@ -17,6 +17,7 @@ jobs:
           cache: yarn
 
       - run: yarn
+      - run: yarn build
       - run: yarn build:doc
       - name: publish docs
         uses: peaceiris/actions-gh-pages@v3
