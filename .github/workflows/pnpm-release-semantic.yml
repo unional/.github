@@ -12,7 +12,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
-      - use: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v2
         with:
           version: 7.14.0
       - uses: actions/setup-node@v3

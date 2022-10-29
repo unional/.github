@@ -1,4 +1,4 @@
-name: yarn-verify-linux
+name: pnpm-verify-linux
 on:
   workflow_call:
 jobs:
