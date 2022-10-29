@@ -1,4 +1,4 @@
-name: yarn-release-semantic
+name: pnpm-release-semantic
 on:
   workflow_call:
 

@@ -1,4 +1,4 @@
-name: yarn-release-changeset
+name: pnpm-release-changeset
 on:
   workflow_call:
 
