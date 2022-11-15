@@ -1,18 +1,23 @@
 name: pnpm-verify-linux
 on:
   workflow_call:
+    inputs:
+      node-version:
+        type: string
+        required: false
+        default: "[14, 16, 18]"
 jobs:
   verify:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node-version: [14, 16, 18]
+        node-version: ${{ fromJson(inputs.node-version) }}
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
         with:
-          version: 7.1.9
+          version: 7.14.2
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
