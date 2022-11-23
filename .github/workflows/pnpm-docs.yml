@@ -3,7 +3,7 @@ on:
   workflow_call:
     inputs:
       publish_dir:
-        type: string,
+        type: string
         required: false
         default: ./docs
 jobs:
