@@ -6,6 +6,10 @@ on:
         type: string
         required: false
         default: ./docs
+      pnpm-version:
+        type: string
+        required: false
+        default: 7.17.0
 jobs:
   npm:
     runs-on: ubuntu-latest
@@ -15,7 +19,7 @@ jobs:
           fetch-depth: 0
       - uses: pnpm/action-setup@v2
         with:
-          version: 7.16.0
+          version: ${{ inputs.pnpm-version }}
       - uses: actions/setup-node@v3
         with:
           node-version: 16
