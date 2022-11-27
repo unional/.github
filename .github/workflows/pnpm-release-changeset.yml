@@ -1,6 +1,11 @@
 name: pnpm-release-changeset
 on:
   workflow_call:
+    inputs:
+      pnpm-version:
+        type: string
+        required: false
+        default: 7.17.0
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -14,7 +19,7 @@ jobs:
           token: ${{ secrets.CI_GITHUB_TOKEN }}
       - uses: pnpm/action-setup@v2
         with:
-          version: 7.16.1
+          version: ${{ inputs.pnpm-version }}
       - uses: actions/setup-node@v3
         with:
           node-version: 16

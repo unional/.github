@@ -9,7 +9,7 @@ on:
       pnpm-version:
         type: string
         required: false
-        default: 7.16.1
+        default: 7.17.0
 jobs:
   verify:
     runs-on: ${{ matrix.os }}

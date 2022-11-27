@@ -6,6 +6,10 @@ on:
         type: string
         required: false
         default: "[14, 16, 18]"
+      pnpm-version:
+        type: string
+        required: false
+        default: 7.17.0
 jobs:
   verify:
     runs-on: ${{ matrix.os }}
@@ -17,7 +21,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
         with:
-          version: 7.16.1
+          version: ${{ inputs.pnpm-version }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
