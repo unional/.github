@@ -3,7 +3,7 @@ on:
   workflow_call:
     inputs:
       os:
-        type: string,
+        type: string
         required: false
         default: '["ubuntu-latest", "macos-latest", "windows-latest"]'
       node-version:
