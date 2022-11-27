@@ -1,6 +1,11 @@
 name: pnpm-release-semantic
 on:
   workflow_call:
+    inputs:
+      pnpm-version:
+        type: string
+        required: false
+        default: 7.17.0
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -12,31 +17,22 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.CI_GITHUB_TOKEN }}
+
       - uses: pnpm/action-setup@v2
         with:
-          version: 7.16.1
+          version: ${{ inputs.pnpm-version }}
       - uses: actions/setup-node@v3
         with:
           node-version: 16
           cache: pnpm
 
       - name: Install Dependencies
-        run: pnpm install
+        run: pnpm
       - run: pnpm build
-      - name: update .npmrc with token
-        run: |
-          cat << EOF > "$HOME/.npmrc"
-            //registry.npmjs.org/:_authToken=$NPM_TOKEN
+      - name: semantic-release with CI GitHub Token
+        run: pnpm release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          commit: 'chore: version packages'
-          version: pnpm run version
-          publish: pnpm run release
-        env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
 
       # - name: Send a Slack notification if a publish happens
