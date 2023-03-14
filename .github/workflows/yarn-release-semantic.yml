@@ -17,10 +17,10 @@ jobs:
         with:
           node-version: 18
           cache: yarn
-
       - name: Install Dependencies
         run: yarn
       - run: yarn build
+      - run: yarn add -D semantic-release
       - name: semantic-release with CI GitHub Token
         run: yarn semantic-release
         env:
