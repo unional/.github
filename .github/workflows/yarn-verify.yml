@@ -1,4 +1,4 @@
-name: pnpm-verify
+name: yarn-verify
 on:
   workflow_call:
     inputs:
@@ -10,10 +10,8 @@ on:
         type: string
         required: false
         default: "[14, 16, 18]"
-      pnpm-version:
-        type: string
-        required: false
-        default: 7.17.0
+on:
+  workflow_call:
 jobs:
   verify:
     runs-on: ${{ matrix.os }}
@@ -23,21 +21,18 @@ jobs:
         node-version: ${{ fromJson(inputs.node-version) }}
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: ${{ inputs.pnpm-version }}
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: pnpm
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
+          cache: yarn
+
       - name: Install Dependencies
-        run: pnpm install
+        run: yarn
 
       - name: Verify
-        run: pnpm verify
+        run: yarn verify
 
       - name: codecov
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 18
