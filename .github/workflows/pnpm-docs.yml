@@ -9,7 +9,7 @@ on:
       pnpm-version:
         type: string
         required: false
-        default: 7.17.0
+        default: 8.5.0
 jobs:
   npm:
     runs-on: ubuntu-latest
