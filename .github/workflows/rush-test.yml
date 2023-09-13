@@ -11,7 +11,7 @@ jobs:
     steps:
       - run: git config --global core.eol LF
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: cache rush
         uses: actions/cache@v3
         with:
