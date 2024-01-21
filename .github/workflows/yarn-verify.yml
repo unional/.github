@@ -9,7 +9,7 @@ on:
       node-version:
         type: string
         required: false
-        default: "[14, 16, 18]"
+        default: "[16, 18, 20]"
       debug_enabled:
         type: boolean
         description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
