@@ -9,7 +9,7 @@ on:
       node-version:
         type: string
         required: false
-        default: "[16, 18, 20]"
+        default: "[18, 20]"
       pnpm-version:
         type: string
         required: false
@@ -46,7 +46,7 @@ jobs:
         run: pnpm verify
 
       - name: codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 18
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 20
         uses: codecov/codecov-action@v3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
