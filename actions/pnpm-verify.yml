@@ -1,0 +1,31 @@
+name: Verify
+inputs:
+  os:
+    type: string
+    required: false
+    default: '["ubuntu-latest", "macos-latest", "windows-latest"]'
+  node-version:
+    type: string
+    required: false
+    default: "[18, 20, 22]"
+  debug_enabled:
+    type: boolean
+    description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+    required: false
+    default: false
+runs:
+  using: 'composite'
+  steps:
+    - uses: pnpm/action-setup@v3
+    - name: Use Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      if: ${{ inputs.debug_enabled }}
+    - name: Install Dependencies
+      run: pnpm install
+    - name: Verify
+      run: pnpm verify
