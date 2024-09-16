@@ -18,14 +18,14 @@ jobs:
           echo ">>> Started xvfb"
       - uses: actions/checkout@v4
       - name: cache rush
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: ${{ runner.os }}-rush-${{ hashFIles('rush.json') }}
           path: |
             common/temp/install-run
             ~/.rush
       - name: cache pnpm
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: ${{ runner.os }}-rush-${{ hashFiles('common/config/rush/pnpm-lock.yaml')}}
           path: |
