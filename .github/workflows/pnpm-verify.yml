@@ -9,7 +9,7 @@ on:
       node-version:
         type: string
         required: false
-        default: "[18, 20]"
+        default: "[18, 20, 22]"
       pnpm-version:
         type: string
         required: false
@@ -29,8 +29,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
-        with:
-          version: ${{ inputs.pnpm-version }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
