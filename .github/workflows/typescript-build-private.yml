@@ -44,12 +44,12 @@ jobs:
           project-token: ${{ secrets.codacy-token }}
           coverage-reports: coverage/clover.xml
       - name: upload cjs folder
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cjs
           path: cjs
       - name: upload esm folder
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: esm
           path: esm
