@@ -5,11 +5,10 @@ on:
       node-version:
         type: string
         required: false
-        default: "[16, 18, 20]"
+        default: "[20, 22, 24]"
       pnpm-version:
         type: string
         required: false
-        default: 8.14.1
 jobs:
   verify:
     runs-on: ${{ matrix.os }}
@@ -20,8 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ inputs.pnpm-version }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
         with:
