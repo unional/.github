@@ -10,7 +10,7 @@ jobs:
     steps:
       - run: git config --global core.eol LF
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: cache rush
         uses: actions/cache@v4
         with:
