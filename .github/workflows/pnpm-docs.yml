@@ -2,7 +2,7 @@ name: build-docs
 on:
   workflow_call:
     inputs:
-      publish_dir:
+      publish-dir:
         type: string
         required: false
         default: ./docs
@@ -28,4 +28,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ inputs.publish_dir }}
+          publish_dir: ${{ inputs.publish-dir }}
