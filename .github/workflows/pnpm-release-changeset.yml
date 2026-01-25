@@ -42,7 +42,7 @@ jobs:
         uses: unional/.github/.github/actions/setup-playwright@main
 
       - name: Install vsce
-        run: pnpm install -g vsce
+        run: pnpm install -g @vscode/vsce
 
       - run: pnpm build
       - name: update .npmrc with token
