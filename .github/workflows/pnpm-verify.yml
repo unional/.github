@@ -40,6 +40,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      - name: Install playwright browsers
+        uses: unional/.github/.github/actions/setup-playwright@main
+
       - name: Verify
         run: pnpm verify
 
