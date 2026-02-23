@@ -16,33 +16,42 @@ runs:
       id: playwright-version
       shell: bash
       run: |
-        # Extract Playwright version based on package manager
+        # Extract Playwright version based on package manager; skip gracefully if not installed
+        VERSION=""
         case "${{ inputs.package-manager }}" in
           pnpm)
-            VERSION=$(pnpm exec playwright --version | grep -oE '[0-9]+(\.[0-9]+)+')
+            VERSION=$(pnpm exec playwright --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
             ;;
           npm)
-            VERSION=$(npm exec playwright -- --version | grep -oE '[0-9]+(\.[0-9]+)+')
+            VERSION=$(npm exec playwright -- --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
             ;;
           yarn)
-            VERSION=$(yarn exec playwright --version | grep -oE '[0-9]+(\.[0-9]+)+')
+            VERSION=$(yarn exec playwright --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
             ;;
           bun)
-            VERSION=$(bun run playwright --version | grep -oE '[0-9]+(\.[0-9]+)+')
+            VERSION=$(bun run playwright --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
             ;;
           deno)
-            VERSION=$(deno run playwright --version | grep -oE '[0-9]+(\.[0-9]+)+')
+            VERSION=$(deno run playwright --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
             ;;
           *)
             echo "Unsupported package manager: ${{ inputs.package-manager }}"
             exit 1
             ;;
         esac
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Playwright version: $VERSION"
+        if [ -n "$VERSION" ]; then
+          echo "available=true" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Playwright version: $VERSION"
+        else
+          echo "available=false" >> $GITHUB_OUTPUT
+          echo "version=" >> $GITHUB_OUTPUT
+          echo "Playwright not found in project, skipping setup"
+        fi
 
     - name: Set Playwright cache path
       id: playwright-cache-path
+      if: steps.playwright-version.outputs.available == 'true'
       shell: bash
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
@@ -55,6 +64,7 @@ runs:
 
     - name: Cache Playwright browsers
       id: cache-playwright
+      if: steps.playwright-version.outputs.available == 'true'
       uses: actions/cache@v5
       with:
         path: ${{ steps.playwright-cache-path.outputs.path }}
@@ -63,7 +73,7 @@ runs:
           ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}-
 
     - name: Install Playwright browsers
-      if: steps.cache-playwright.outputs.cache-hit != 'true'
+      if: steps.playwright-version.outputs.available == 'true' && steps.cache-playwright.outputs.cache-hit != 'true'
       shell: bash
       run: |
         case "${{ inputs.package-manager }}" in
