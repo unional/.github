@@ -1,0 +1,49 @@
+name: bun-verify
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        required: false
+        default: '["ubuntu-latest", "macos-latest", "windows-latest"]'
+      bun-version:
+        type: string
+        required: false
+        default: '["latest"]'
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
+jobs:
+  verify:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ${{ fromJson(inputs.os) }}
+        bun-version: ${{ fromJson(inputs.bun-version) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ matrix.bun-version }}
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Install playwright browsers
+        uses: unional/.github/.github/actions/setup-playwright@main
+        with:
+          package-manager: bun
+
+      - name: Verify
+        run: bun run verify
+
+      - name: codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.bun-version == 'latest'
+        uses: codecov/codecov-action@v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
