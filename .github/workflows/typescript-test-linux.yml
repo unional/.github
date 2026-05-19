@@ -33,3 +33,14 @@ jobs:
           key: ${{ runner.os }}-node-modules-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
       - run: yarn --ignore-engines
       - run: yarn test --maxWorkers=2
+
+  all-checks:
+    needs: [typescript]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: All checks passed
+        run: |
+          if [[ "${{ needs.typescript.result }}" != "success" ]]; then
+            exit 1
+          fi

@@ -16,3 +16,14 @@ jobs:
       - uses: actions/download-artifact@v8.0.1
       - run: pnpm install
       - run: pnpm build
+
+  all-checks:
+    needs: [npm]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: All checks passed
+        run: |
+          if [[ "${{ needs.npm.result }}" != "success" ]]; then
+            exit 1
+          fi

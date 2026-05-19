@@ -35,3 +35,14 @@ jobs:
       - name: codecov
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 16
         uses: codecov/codecov-action@v6
+
+  all-checks:
+    needs: [verify]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: All checks passed
+        run: |
+          if [[ "${{ needs.verify.result }}" != "success" ]]; then
+            exit 1
+          fi
