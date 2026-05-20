@@ -1,13 +1,18 @@
 name: typescript-test
 on:
   workflow_call:
+    inputs:
+      node-version:
+        type: string
+        required: false
+        default: '["lts/-1", "lts/*"]'
 jobs:
   typescript:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node-version: [12, 14, 16]
+        node-version: ${{ fromJson(inputs.node-version) }}
     steps:
       - run: git config --global core.eol LF
       - run: git config --global core.autocrlf false

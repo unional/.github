@@ -1,13 +1,18 @@
 name: yarn-verify-linux
 on:
   workflow_call:
+    inputs:
+      node-version:
+        type: string
+        required: false
+        default: '["lts/-1", "lts/*"]'
 jobs:
   verify:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node-version: [16, 18, 20]
+        node-version: ${{ fromJson(inputs.node-version) }}
     steps:
       - uses: actions/checkout@v6
 

@@ -5,7 +5,7 @@ on:
       node-version:
         type: string
         required: false
-        default: "[20, 22, 24]"
+        default: '["lts/-1", "lts/*"]'
       pnpm-version:
         type: string
         required: false
