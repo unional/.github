@@ -20,7 +20,7 @@ runs:
         VERSION=""
         case "${{ inputs.package-manager }}" in
           pnpm)
-            VERSION=$(pnpm exec playwright --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
+            VERSION=$(pnpm --silent exec playwright --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
             ;;
           npm)
             VERSION=$(npm exec playwright -- --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+') || true
