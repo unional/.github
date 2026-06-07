@@ -48,7 +48,7 @@ jobs:
 
       - name: codecov
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 20
-        uses: codecov/codecov-action@v6.0.1
+        uses: codecov/codecov-action@v6.0.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
