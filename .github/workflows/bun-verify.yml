@@ -23,7 +23,7 @@ jobs:
         os: ${{ fromJson(inputs.os) }}
         bun-version: ${{ fromJson(inputs.bun-version) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ matrix.bun-version }}
