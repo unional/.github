@@ -1,0 +1,80 @@
+name: pnpm-release-changeset-oidc
+# Secretless variant of pnpm-release-changeset.yml.
+#
+# Differences from that workflow:
+#   - No CI_GITHUB_TOKEN. Uses the built-in GITHUB_TOKEN with elevated `permissions`.
+#     Trade-off: a PR opened with GITHUB_TOKEN does not trigger `on: pull_request`
+#     workflows, so the "version packages" PR gets no status checks. That is fine for a
+#     mechanical version + changelog bump, since the release job only runs after the
+#     push to the base branch has already been verified.
+#   - No NPM_TOKEN. Publishes via npm trusted publishing (OIDC), which also emits
+#     provenance attestations. Each package must have a trusted publisher registered at
+#     npmjs.com/package/<name>/access naming this repo and this workflow's filename.
+#
+# Personal (non-organization) accounts have no shared secret scope, so a repo under a
+# user namespace would otherwise need its own copy of every token. This workflow needs
+# none.
+on:
+  workflow_call:
+    inputs:
+      pnpm-version:
+        type: string
+        required: false
+      node-version:
+        type: string
+        required: false
+        default: lts/*
+    outputs:
+      published:
+        description: 'Whether the release was published'
+        value: ${{ jobs.release.outputs.published }}
+
+permissions:
+  # Mints the OIDC token npm exchanges for short-lived publish credentials.
+  id-token: write
+  # Lets changesets/action push the version branch and tags.
+  contents: write
+  # Lets changesets/action open the "version packages" PR.
+  pull-requests: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Version comes from `packageManager` in package.json unless overridden.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing requires npm 11.5.1+. Node LTS may ship an older npm.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - run: pnpm build
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          commit: 'chore: version packages'
+          version: pnpm run version
+          publish: pnpm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
