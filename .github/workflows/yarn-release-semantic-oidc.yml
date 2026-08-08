@@ -1,0 +1,89 @@
+name: yarn-release-semantic-oidc
+# Secretless variant of yarn-release-semantic.yml.
+#
+# Differences from that workflow:
+#   - No CI_GITHUB_TOKEN. Checkout and semantic-release both use the built-in
+#     GITHUB_TOKEN with elevated `permissions`. semantic-release publishes straight from
+#     the default branch, so unlike the changesets path there is no version PR that needs
+#     to trigger `on: pull_request` workflows — the PAT bought nothing here.
+#   - No NPM_TOKEN. Publishes via npm trusted publishing (OIDC), which also emits
+#     provenance attestations. Each package must have a trusted publisher registered at
+#     npmjs.com/package/<name>/access naming this repo and the *caller* workflow's
+#     filename (release.yml), not this file.
+#
+# Personal (non-organization) accounts have no shared secret scope, so a repo under a
+# user namespace would otherwise need its own copy of every token. This workflow needs
+# none.
+#
+# Add it alongside yarn-release-semantic.yml rather than replacing it, so repos that have
+# not migrated keep working.
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        required: false
+        default: lts/*
+
+permissions:
+  # Mints the OIDC token npm exchanges for short-lived publish credentials.
+  id-token: write
+  # Lets semantic-release push tags and create the GitHub release.
+  contents: write
+  # Lets @semantic-release/github comment on the issues and PRs a release closes.
+  issues: write
+  pull-requests: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Deliberately no `registry-url`. With it, setup-node writes an .npmrc containing
+      # `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` and points
+      # NPM_CONFIG_USERCONFIG at it. That file is the documented cause of the spurious
+      # `ENONPMTOKEN: No npm token specified` reports in semantic-release/npm#1069 —
+      # npm sees an auth directive it cannot satisfy and never reaches the OIDC exchange.
+      # @semantic-release/npm writes its own .npmrc, so nothing here needs one.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: yarn
+
+      # Trusted publishing requires npm 11.5.1+. Node LTS may ship an older npm.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Install Dependencies
+        run: yarn
+
+      - run: yarn build
+
+      # Pinned, not floating. semantic-release/npm#1069 turned out not to be a plugin bug
+      # but a resolution one: an older `semantic-release` core drags in an old
+      # @semantic-release/npm (9.x/12.x) that predates trusted publishing, and the OIDC
+      # path is silently skipped. Naming both packages explicitly makes the resolved
+      # plugin version an assertion rather than a hope.
+      #
+      # @semantic-release/npm 13.1.5 (2026-03-01) is the current latest; 13.1.4 and
+      # 13.1.5 are dependency bumps only, so it carries no behaviour change over the
+      # 13.1.3 that the #1069 reporters confirmed working once their .npmrc was fixed.
+      #
+      # Still open and NOT fixed by this pin: semantic-release/npm#1023 — the first
+      # release on a *maintenance* branch fails E401 on `npm dist-tag add`, because
+      # trusted publishers are not yet permitted to set dist-tags (npm/cli#8547). Re-run
+      # and it succeeds. Publishing from the default branch, which is what these repos
+      # do, is unaffected.
+      - run: yarn add -D semantic-release@25 @semantic-release/npm@13.1.5
+
+      - name: semantic-release via OIDC trusted publishing
+        run: yarn semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
