@@ -1,0 +1,114 @@
+name: pnpm-release-semantic-oidc
+# pnpm counterpart of yarn-release-semantic-oidc.yml, for semantic-release repos that
+# have moved to pnpm but are not converting to changesets.
+#
+# Derived from the two existing OIDC workflows and NOT from pnpm-release-semantic.yml —
+# that one checks out with CI_GITHUB_TOKEN and publishes with NPM_TOKEN, and starting
+# from a token-based workflow is how auth details get carried over by accident. The pnpm
+# setup here matches pnpm-release-changeset-oidc.yml; the semantic-release steps match
+# yarn-release-semantic-oidc.yml. One deliberate difference from the changeset variant is
+# called out at the setup-node step below — do not "fix" it.
+#
+#   - No CI_GITHUB_TOKEN. Checkout and semantic-release both use the built-in
+#     GITHUB_TOKEN with elevated `permissions`. semantic-release publishes straight from
+#     the default branch, so unlike the changesets path there is no version PR that needs
+#     to trigger `on: pull_request` workflows — the PAT bought nothing here.
+#   - No NPM_TOKEN. Publishes via npm trusted publishing (OIDC), which also emits
+#     provenance attestations. Each package must have a trusted publisher registered at
+#     npmjs.com/package/<name>/access naming this repo and the *caller* workflow's
+#     filename (release.yml), not this file.
+#
+# REQUIRED REPO CONFIG — this workflow cannot enforce either, and both fail at release
+# time rather than at resolution:
+#
+#   1. `.releaserc.json` must NOT include @semantic-release/git. That plugin commits
+#      CHANGELOG.md and pushes it straight to the default branch, which a protected
+#      branch rejects — the required check has not run for that commit, and
+#      github-actions[bot] is not a bypass actor in the standard ruleset. Correct
+#      protection does not save it; the push is rejected either way. Drop
+#      @semantic-release/changelog with it, since the git plugin is its only consumer.
+#      Release notes still land on the GitHub release.
+#
+#   2. In a workspace layout (packages/<name>), @semantic-release/npm needs
+#      `pkgRoot: packages/<name>` or it will try to publish the private workspace root.
+#      Single-package repos need nothing.
+on:
+  workflow_call:
+    inputs:
+      pnpm-version:
+        type: string
+        required: false
+      node-version:
+        type: string
+        required: false
+        default: lts/*
+
+permissions:
+  # Mints the OIDC token npm exchanges for short-lived publish credentials.
+  id-token: write
+  # Lets semantic-release push tags and create the GitHub release.
+  contents: write
+  # Lets @semantic-release/github comment on the issues and PRs a release closes.
+  issues: write
+  pull-requests: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Version comes from `packageManager` in package.json unless overridden.
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ inputs.pnpm-version }}
+
+      # Deliberately NO `registry-url`, unlike pnpm-release-changeset-oidc.yml. With it,
+      # setup-node writes an .npmrc containing
+      # `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` and points
+      # NPM_CONFIG_USERCONFIG at it. That file is the documented cause of the spurious
+      # `ENONPMTOKEN: No npm token specified` reports in semantic-release/npm#1069 —
+      # npm sees an auth directive it cannot satisfy and never reaches the OIDC exchange.
+      # The changesets path is unaffected, which is why that workflow keeps it.
+      # @semantic-release/npm writes its own .npmrc, so nothing here needs one.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      # Trusted publishing requires npm 11.5.1+. Node LTS may ship an older npm.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - run: pnpm build
+
+      # Pinned, not floating. semantic-release/npm#1069 turned out not to be a plugin bug
+      # but a resolution one: an older `semantic-release` core drags in an old
+      # @semantic-release/npm (9.x/12.x) that predates trusted publishing, and the OIDC
+      # path is silently skipped. Naming both packages explicitly makes the resolved
+      # plugin version an assertion rather than a hope.
+      #
+      # `-w` installs at the workspace root, which is where semantic-release runs. It is
+      # required in a workspace and harmless in a single-package repo only if that repo
+      # has a pnpm-workspace.yaml; repos without one should drop the flag.
+      #
+      # Still open and NOT fixed by this pin: semantic-release/npm#1023 — the first
+      # release on a *maintenance* branch fails E401 on `npm dist-tag add`, because
+      # trusted publishers are not yet permitted to set dist-tags (npm/cli#8547). Re-run
+      # and it succeeds. Publishing from the default branch, which is what these repos
+      # do, is unaffected.
+      - run: pnpm add -D -w semantic-release@25 @semantic-release/npm@13.1.5
+
+      - name: semantic-release via OIDC trusted publishing
+        run: pnpm semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
