@@ -1,0 +1,103 @@
+name: bun-release-changeset-oidc
+# Secretless variant of bun-release-changeset.yml.
+#
+# Differences from that workflow:
+#   - No CI_GITHUB_TOKEN. Checkout and changesets/action both use the built-in
+#     GITHUB_TOKEN with elevated `permissions`. Trade-off: a PR opened with GITHUB_TOKEN
+#     does not trigger `on: pull_request` workflows, so the "version packages" PR gets no
+#     status checks. That is fine for a mechanical version + changelog bump, since the
+#     release job only runs after the push to the base branch has already been verified.
+#   - No NPM_TOKEN, and no hand-written .npmrc. Publishes via npm trusted publishing
+#     (OIDC), which also emits provenance attestations. Each package needs a trusted
+#     publisher registered at npmjs.com/package/<name>/access naming the repo and the
+#     *caller* workflow's filename (release.yml), not this file.
+#
+# WHY OIDC WORKS HERE, EVEN THOUGH `bun publish` DOES NOT SUPPORT IT:
+#
+# changesets does not publish with the package manager it installed with. Its
+# getPublishTool() returns pnpm only when pnpm is detected, and `{name: "npm"}` for
+# everything else — bun included. So `changeset publish` shells out to `npm publish`, and
+# the OIDC exchange happens inside the npm CLI, which does support trusted publishing.
+# Verified against @changesets/cli 2.31.1.
+#
+# The consequence is that npm, not bun, must be current: the "Ensure npm supports trusted
+# publishing" step below is load-bearing, not boilerplate.
+#
+# Deliberately NO `registry-url` on setup-node — unlike pnpm-release-changeset-oidc.yml,
+# which keeps it. That workflow publishes through `pnpm publish`; this one goes through
+# the npm CLI, which is the same path that made `registry-url` fatal on the
+# semantic-release workflows. With it, setup-node writes an .npmrc containing
+# `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`, and npm sees an auth directive
+# it cannot satisfy instead of reaching the OIDC exchange (semantic-release/npm#1069).
+#
+# The playwright and vsce steps from bun-release-changeset.yml are intentionally absent.
+# They serve repos that need a browser or publish a VS Code extension; a repo needing
+# them should add them to its own caller or ask for a variant.
+#
+# Added alongside bun-release-changeset.yml rather than replacing it, so repos that have
+# not migrated keep working.
+on:
+  workflow_call:
+    inputs:
+      bun-version:
+        type: string
+        required: false
+      node-version:
+        type: string
+        required: false
+        default: lts/*
+    outputs:
+      published:
+        description: 'Whether the release was published'
+        value: ${{ jobs.release.outputs.published }}
+
+permissions:
+  # Mints the OIDC token npm exchanges for short-lived publish credentials.
+  id-token: write
+  # Lets changesets/action push the version branch and tags. bun-release-changeset.yml
+  # declares `contents: read` because its pushes went out under CI_GITHUB_TOKEN instead.
+  contents: write
+  # Lets changesets/action open the "version packages" PR.
+  pull-requests: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ inputs.bun-version }}
+
+      # Load-bearing: changesets publishes through the npm CLI (see header), and trusted
+      # publishing requires npm 11.5.1+. Node LTS may ship an older npm.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Install Dependencies
+        run: bun install
+
+      - run: bun run build
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          commit: 'chore: version packages'
+          version: bun run version
+          publish: bun run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
