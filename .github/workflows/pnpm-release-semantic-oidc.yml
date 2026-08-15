@@ -67,13 +67,15 @@ jobs:
         with:
           version: ${{ inputs.pnpm-version }}
 
-      # Deliberately NO `registry-url`, unlike pnpm-release-changeset-oidc.yml. With it,
+      # Deliberately NO `registry-url`, as in every other -oidc workflow here. With it,
       # setup-node writes an .npmrc containing
       # `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` and points
       # NPM_CONFIG_USERCONFIG at it. That file is the documented cause of the spurious
       # `ENONPMTOKEN: No npm token specified` reports in semantic-release/npm#1069 —
       # npm sees an auth directive it cannot satisfy and never reaches the OIDC exchange.
-      # The changesets path is unaffected, which is why that workflow keeps it.
+      # The changesets workflows dropped it for the same reason: there the empty
+      # `${NODE_AUTH_TOKEN}` made `changeset publish`'s already-published probe come
+      # back empty, so it republished and died on E403.
       # @semantic-release/npm writes its own .npmrc, so nothing here needs one.
       - uses: actions/setup-node@v7
         with:
