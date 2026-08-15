@@ -52,11 +52,19 @@ jobs:
       # Version comes from `packageManager` in package.json unless overridden.
       - uses: pnpm/action-setup@v6
 
+      # No `registry-url:` on purpose. It only exists to write an auth stanza —
+      # `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` in a temp .npmrc — which
+      # this secretless workflow can never fill in. Every npm and pnpm invocation then
+      # warns "Failed to replace env in config", and worse, `changeset publish`'s
+      # "is this version already on the registry?" probe comes back empty, so it tries
+      # to publish an already-published version and dies on npm's E403
+      # "You cannot publish over the previously published versions". The registry itself
+      # is not at stake: npmjs.org is npm's default, and repos that care say so in their
+      # own .npmrc.
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       # Trusted publishing requires npm 11.5.1+. Node LTS may ship an older npm.
       - name: Ensure npm supports trusted publishing

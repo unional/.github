@@ -23,12 +23,11 @@ name: bun-release-changeset-oidc
 # The consequence is that npm, not bun, must be current: the "Ensure npm supports trusted
 # publishing" step below is load-bearing, not boilerplate.
 #
-# Deliberately NO `registry-url` on setup-node — unlike pnpm-release-changeset-oidc.yml,
-# which keeps it. That workflow publishes through `pnpm publish`; this one goes through
-# the npm CLI, which is the same path that made `registry-url` fatal on the
-# semantic-release workflows. With it, setup-node writes an .npmrc containing
-# `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`, and npm sees an auth directive
-# it cannot satisfy instead of reaching the OIDC exchange (semantic-release/npm#1069).
+# Deliberately NO `registry-url` on setup-node, as in every other -oidc workflow here.
+# With it, setup-node writes an .npmrc containing
+# `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` that a secretless run can never
+# fill in, and the tooling sees an auth directive it cannot satisfy instead of reaching
+# the OIDC exchange (semantic-release/npm#1069).
 #
 # The playwright and vsce steps from bun-release-changeset.yml are intentionally absent.
 # They serve repos that need a browser or publish a VS Code extension; a repo needing
