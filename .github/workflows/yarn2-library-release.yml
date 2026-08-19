@@ -21,7 +21,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v2.1.0
+        uses: changesets/action@v2.1.1
         # with:
         #   # run `yarn` again to update peer dependency refs
         #   version: yarn changeset version && yarn

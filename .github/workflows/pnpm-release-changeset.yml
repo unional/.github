@@ -54,7 +54,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v2.1.0
+        uses: changesets/action@v2.1.1
         with:
           commit: 'chore: version packages'
           version: pnpm run version
