@@ -7,10 +7,17 @@ pull_request_rules:
       merge:
         method: rebase
   - name: automatic merge for Renovate pull requests
+    # Gate on the labels Renovate attaches from .github/renovate.json, not on
+    # the branch name: Renovate reuses one branch per target major, so
+    # `renovate/codecov-codecov-action-6.x` carries both the v5 -> v6 major and
+    # every v6.0.x patch after it. The name cannot tell them apart, and the
+    # titles cannot either (a major of a pinned action reads `to v9.0.0`).
+    # Requiring `safe-update` fails closed: an unlabelled PR waits for a human.
     conditions:
       - author=renovate[bot]
       - and:
-          - head~=^(?!major-)
+          - label=safe-update
+          - -label=major-update
           - -title~=update dependency @types\/node
     actions:
       merge:
