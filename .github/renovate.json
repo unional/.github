@@ -28,6 +28,13 @@
       "addLabels": [
         "safe-update"
       ]
+    },
+    {
+      "description": "main is the changesets/action v1 line; the v2 line lives on the v2.x branch",
+      "matchDepNames": [
+        "changesets/action"
+      ],
+      "allowedVersions": "<2"
     }
   ]
 }

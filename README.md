@@ -48,9 +48,23 @@ enforces it at runtime:
 Run v2 against CLI v2 and it aborts: *"Changesets CLI v2 is not supported; use
 Changesets action v1 instead."* No single workflow serves both.
 
+The enforcement is one-directional. `changesets/action@v2` refuses to run
+against CLI v2 outright. `changesets/action@v1` carries no such check — it reads
+the consumer's CLI major only to pick between the `bump` and `version`
+subcommands — so `@v1` is the conservative pin when you are unsure.
+
 Consumers are split across both majors, so the lines run in parallel rather than
-one being a deadline. Eleven consumers of `pnpm-release-changeset.yml` are on CLI
-v2 (`@v1`); `monorepo-template` and `stable-context` are on v3 (`@v2`).
+one being a deadline. Verified against each consumer's `package.json` on
+2026-08-29:
+
+| `@changesets/cli` | Consumers of `pnpm-release-changeset.yml` | Pin |
+| --- | --- | --- |
+| v3 | `async-fp` `^3.0.0`, `iso-error` `3.0.1`, `monorepo-template` `^3.0.0`, `path-equal` `^3.0.0`, `stable-context` `^3.0.0`, `standard-log` `^3.0.0` | `@v2` |
+| v2 | `never-fail` `^2.25.0`, `type-plus` `^2.29.8` | `@v1` |
+| none declared | `eslint-plugin-harmony` | — |
+
+`eslint-plugin-harmony` declares no `@changesets/cli` at all; it needs a look of
+its own before it is put on a line.
 
 **Branch layout:** `main` is the v1 line; the v2 line lives on `v2.x`. A fix that
 applies to both is made on `main` and cherry-picked. When the last consumer
@@ -62,7 +76,15 @@ reaches CLI v3, `v2.x` merges down and the v1 line retires.
 call land on `main` with no human in the loop — and under `@main` they reach
 every consumer immediately. That is not hypothetical: `changesets/action` v1 → v2
 was auto-merged and broke the release path of every changesets consumer at once.
-Tagging means such a bump lands on `main` and waits until someone cuts a release.
+
+Two things stop a repeat. Renovate now labels its PRs by update type and Mergify
+auto-merges only `safe-update`, so a major waits for a review. And tagging means
+that even once a major is accepted, it lands on `main` and reaches consumers only
+when someone cuts a release.
+
+Renovate is additionally held to `changesets/action` v1 on `main`, because on
+this branch that pin is a line assignment rather than a version to keep current.
+The v2 line lives on `v2.x`, which Renovate does not touch.
 
 ### Cutting a release
 
