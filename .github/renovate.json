@@ -1,5 +1,33 @@
 {
   "extends": [
     "github>unional/renovate-preset"
+  ],
+  "packageRules": [
+    {
+      "description": "Label major updates so Mergify can hold them for review",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "addLabels": [
+        "major-update"
+      ]
+    },
+    {
+      "description": "Label everything else as safe for Mergify to auto-merge",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "digest",
+        "bump",
+        "rollback",
+        "replacement",
+        "lockFileMaintenance"
+      ],
+      "addLabels": [
+        "safe-update"
+      ]
+    }
   ]
 }
