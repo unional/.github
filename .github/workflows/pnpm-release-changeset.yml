@@ -21,7 +21,6 @@ jobs:
     env:
       PLAYWRIGHT_PATH: ~/.cache/ms-playwright
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     outputs:
       published: ${{ steps.changesets.outputs.published }}
     steps:
@@ -35,6 +34,12 @@ jobs:
           node-version: lts/*
           cache: pnpm
 
+      # Trusted publishing requires npm 11.5.1+. Node LTS may ship an older npm.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
       - name: Install Dependencies
         run: pnpm install
 
@@ -45,12 +50,6 @@ jobs:
         run: pnpm install -g @vscode/vsce
 
       - run: pnpm build
-      - name: update .npmrc with token
-        run: |
-          cat << EOF > "$HOME/.npmrc"
-            //registry.npmjs.org/:_authToken=$NPM_TOKEN
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
