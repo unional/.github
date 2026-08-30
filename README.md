@@ -35,6 +35,21 @@ hand.
 Do **not** pin `@main`: every consumer on it takes every change the instant it
 merges, including breaking ones nobody reviewed.
 
+### npm authentication
+
+The changesets release workflows no longer take an `NPM_TOKEN`. They publish with
+npm trusted publishing (OIDC), which issues short-lived credentials and emits
+provenance attestations.
+
+**Before your next release, register a trusted publisher** at
+`npmjs.com/package/<name>/access` for every package the repo publishes, naming
+this repo and your *caller* workflow's filename (`release.yml`) — not the
+reusable workflow's. Until you do, the publish step fails with a 401.
+
+One exception: `yarn-release-changeset-monorepo.yml` publishes through Yarn
+Berry's own publisher, which has no OIDC support, so it cannot authenticate at
+all right now. Its header says so. No consumer of this repo calls it.
+
 ### Why there are two lines
 
 `changesets/action` and `@changesets/cli` are strictly paired, and the action

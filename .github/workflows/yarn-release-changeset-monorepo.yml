@@ -1,6 +1,18 @@
 name: yarn-release-changeset
+# UNAUTHENTICATED PUBLISH. `NPM_TOKEN` has been removed from this repo's workflows, but
+# this one publishes with `yarn workspaces foreach npm publish` -- Yarn Berry's own
+# publisher, which has no trusted-publishing (OIDC) support. Unlike the other changesets
+# workflows it never reaches the npm CLI, so there is nothing here for OIDC to hook into.
+#
+# The publish step below will fail with a 401 until this workflow is reworked to publish
+# through the npm CLI. No consumer of this repo currently calls it.
 on:
   workflow_call:
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -30,9 +42,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: set npmAuthToken
-        if: steps.changesets.outputs.hasChangesets == 'false'
-        run: yarn config set npmAuthToken ${{ secrets.NPM_TOKEN }}
       - name: publish
         if: steps.changesets.outputs.hasChangesets == 'false'
         run: yarn workspaces foreach npm publish --access public && changeset tag
