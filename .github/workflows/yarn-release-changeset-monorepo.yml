@@ -35,12 +35,11 @@ jobs:
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2.0.0
         with:
-          commit: 'chore: version packages'
-          version: yarn version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: version packages'
+          version-script: yarn version
 
       - name: publish
         if: steps.changesets.outputs.hasChangesets == 'false'

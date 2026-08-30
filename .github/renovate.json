@@ -30,11 +30,11 @@
       ]
     },
     {
-      "description": "main is the changesets/action v1 line; the v2 line lives on the v2.x branch",
+      "description": "v2.x is the changesets/action v2 line; the v1 line lives on main",
       "matchDepNames": [
         "changesets/action"
       ],
-      "allowedVersions": "<2"
+      "allowedVersions": ">=2 <3"
     }
   ]
 }

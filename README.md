@@ -46,9 +46,12 @@ provenance attestations.
 this repo and your *caller* workflow's filename (`release.yml`) — not the
 reusable workflow's. Until you do, the publish step fails with a 401.
 
-One exception: `yarn-release-changeset-monorepo.yml` publishes through Yarn
-Berry's own publisher, which has no OIDC support, so it cannot authenticate at
-all right now. Its header says so. No consumer of this repo calls it.
+Two exceptions on this line, both flagged in their own headers:
+`yarn-release-changeset-monorepo.yml` and `yarn-release-changeset.yml` publish
+through Yarn Berry's own publisher, which has no OIDC support, so they cannot
+authenticate at all. `@changesets/cli` v3 routes yarn repos to Berry's publisher
+rather than the npm CLI — which is why `yarn-release-changeset.yml` is fine on
+`@v1` and broken here. Yarn Berry consumers should stay on `@v1`.
 
 ### Why there are two lines
 
@@ -81,7 +84,7 @@ one being a deadline. Verified against each consumer's `package.json` on
 `eslint-plugin-harmony` declares no `@changesets/cli` at all; it needs a look of
 its own before it is put on a line.
 
-**Branch layout:** `main` is the v1 line; the v2 line lives on `v2.x`. A fix that
+**You are reading the `v2.x` branch — the v2 line.** The v1 line lives on `main`. A fix that
 applies to both is made on `main` and cherry-picked. When the last consumer
 reaches CLI v3, `v2.x` merges down and the v1 line retires.
 

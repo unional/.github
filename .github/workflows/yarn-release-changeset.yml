@@ -1,16 +1,24 @@
 name: yarn-release-changeset
-# Publishes via npm trusted publishing (OIDC). Each package needs a trusted publisher
-# registered at npmjs.com/package/<name>/access naming the repo and the *caller*
-# workflow's filename.
+# UNAUTHENTICATED PUBLISH ON THIS LINE. `NPM_TOKEN` has been removed from this repo's
+# workflows in favour of npm trusted publishing (OIDC), but this workflow cannot reach it.
 #
-# This works despite Yarn Berry having no trusted-publishing support of its own:
-# `changeset publish` picks the publish tool itself, and on @changesets/cli v2 that is
-# the npm CLI for everything except pnpm. The npm CLI does support OIDC.
+# `changeset publish` picks its own publish tool. On @changesets/cli v2 that was the npm
+# CLI for everything except pnpm, so a Yarn Berry repo still got npm's OIDC exchange --
+# which is why this workflow IS a clean migration on the v1 line (`main`).
+#
+# @changesets/cli v3 changed `getPublishTool()`: a yarn repo now gets Yarn Berry's own
+# publisher, which has no trusted-publishing support. Since this is the v2 line and v2
+# requires CLI v3, publish never reaches the npm CLI here and there is nothing for OIDC
+# to hook into.
+#
+# The publish step will fail with a 401 until either Yarn Berry gains trusted-publishing
+# support or this workflow is reworked to publish through the npm CLI. Consumers on Yarn
+# Berry should stay on `@v1` for now.
 on:
   workflow_call:
 
 permissions:
-  # Mints the OIDC token npm exchanges for short-lived publish credentials.
+  # Kept for when a trusted-publishing path exists here; see the header.
   id-token: write
   # Lets changesets/action push the version branch and tags.
   contents: write
@@ -33,25 +41,18 @@ jobs:
           node-version: 24
           cache: yarn
 
-      # Trusted publishing requires npm 11.5.1+. Node LTS may ship an older npm.
-      - name: Ensure npm supports trusted publishing
-        run: |
-          npm install -g npm@latest
-          npm --version
-
       - name: Install Dependencies
         run: yarn
       - run: yarn build
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2.0.0
         with:
-          commit: 'chore: version packages'
-          version: yarn version
-          publish: yarn changeset publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: version packages'
+          version-script: yarn version
+          publish-script: yarn changeset publish
 
       # - name: Send a Slack notification if a publish happens
       #   if: steps.changesets.outputs.published == 'true'
