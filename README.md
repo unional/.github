@@ -66,7 +66,7 @@ one being a deadline. Verified against each consumer's `package.json` on
 `eslint-plugin-harmony` declares no `@changesets/cli` at all; it needs a look of
 its own before it is put on a line.
 
-**Branch layout:** `main` is the v1 line; the v2 line lives on `v2.x`. A fix that
+**You are reading the `v2.x` branch — the v2 line.** The v1 line lives on `main`. A fix that
 applies to both is made on `main` and cherry-picked. When the last consumer
 reaches CLI v3, `v2.x` merges down and the v1 line retires.
 

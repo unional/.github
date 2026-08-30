@@ -81,8 +81,7 @@ jobs:
         id: changesets
         uses: changesets/action@v2.0.0
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: version packages'
           version-script: pnpm run version
           publish-script: pnpm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
