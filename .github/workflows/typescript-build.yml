@@ -30,6 +30,8 @@ jobs:
       - run: yarn verify -l --aggregate-output
       - name: codecov
         uses: codecov/codecov-action@v7
+        # A coverage upload must never fail CI: the tests are the gate.
+        continue-on-error: true
 
   all-checks:
     needs: [typescript]

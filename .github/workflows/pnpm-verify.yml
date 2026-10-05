@@ -49,6 +49,8 @@ jobs:
       - name: codecov
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == 20
         uses: codecov/codecov-action@v7.1.1
+        # A coverage upload must never fail CI: the tests are the gate.
+        continue-on-error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
