@@ -2,11 +2,31 @@ name: pnpm-release-changeset-oidc
 # Secretless variant of pnpm-release-changeset.yml.
 #
 # Differences from that workflow:
-#   - No CI_GITHUB_TOKEN. Uses the built-in GITHUB_TOKEN with elevated `permissions`.
-#     Trade-off: a PR opened with GITHUB_TOKEN does not trigger `on: pull_request`
-#     workflows, so the "version packages" PR gets no status checks. That is fine for a
-#     mechanical version + changelog bump, since the release job only runs after the
-#     push to the base branch has already been verified.
+#   - No CI_GITHUB_TOKEN. Checkout and changesets/action both use the built-in
+#     GITHUB_TOKEN with the caller's grant. github-actions[bot] therefore opens and
+#     pushes the "version packages" PR, and GitHub creates the PR's `on: pull_request`
+#     runs (CI, CodeQL) but parks them as `action_required` until someone approves
+#     them. A ruleset that requires their checks leaves the PR blocked. So after
+#     changesets/action opens or updates the PR, this job finds the parked runs on the
+#     branch head, waiting up to about 60s for GitHub to create them, and approves each
+#     one (`POST /repos/{owner}/{repo}/actions/runs/{run_id}/approve`). The runs then
+#     execute against the PR, so every required check reports, CodeQL's code-scanning
+#     result included. A GitHub App token would also work, but it means a long-lived
+#     private key in a secret; this needs no stored secret.
+#
+#     The caller must grant `id-token: write`, `contents: write` and
+#     `pull-requests: write` to the job that calls this workflow, plus `actions: write`
+#     for the approval. This workflow declares no `permissions:` of its own, so the
+#     caller's grant passes through unchanged. A block here would cap the token: every
+#     scope it did not list, `actions` included, would drop to `none`, and the approval
+#     would fail with 403 even when the caller grants `actions: write`. Listing
+#     `actions: write` here instead would break every caller that does not grant it,
+#     since a called workflow may not request more than its caller grants. Without
+#     `actions: write` the release still succeeds, but with a warning and a PR whose
+#     runs stay pending.
+#
+#     Ported from repobuddy/.github and cyberuni/.github, which carry the same step.
+#     Their copies are on changesets/action v2; see the step for the one difference.
 #   - No NPM_TOKEN. Publishes via npm trusted publishing (OIDC), which also emits
 #     provenance attestations. Each package must have a trusted publisher registered at
 #     npmjs.com/package/<name>/access naming this repo and this workflow's filename.
@@ -28,14 +48,6 @@ on:
       published:
         description: 'Whether the release was published'
         value: ${{ jobs.release.outputs.published }}
-
-permissions:
-  # Mints the OIDC token npm exchanges for short-lived publish credentials.
-  id-token: write
-  # Lets changesets/action push the version branch and tags.
-  contents: write
-  # Lets changesets/action open the "version packages" PR.
-  pull-requests: write
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -86,3 +98,56 @@ jobs:
           publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # github-actions[bot] opens and pushes the version PR, so GitHub parks the PR's
+      # pull_request runs (CI, CodeQL) as action_required until someone approves them.
+      # Approve them so they run against the PR; see the header. A failed approval warns
+      # rather than failing an otherwise good release.
+      #
+      # changesets/action v1 names the PR output `pullRequestNumber`; v2 renamed it
+      # `pr-number`. Reading both keeps this step identical on the v1 and v2 lines.
+      - name: Approve the version packages PR's pending runs
+        if: (steps.changesets.outputs.pullRequestNumber || steps.changesets.outputs.pr-number) != '' && steps.changesets.outputs.published != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_BRANCH: changeset-release/${{ github.ref_name }}
+        run: |
+          grant="Grant 'actions: write' in the caller's 'permissions:' for the job that calls this workflow."
+          if ! sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$VERSION_BRANCH" --jq .object.sha 2>&1); then
+            echo "$sha"
+            echo "::warning::Could not read the head of $VERSION_BRANCH, so the version packages PR's runs stay pending approval and its required checks never report."
+            exit 0
+          fi
+          list() {
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs?branch=$VERSION_BRANCH&head_sha=$sha&per_page=100" \
+              --jq '.workflow_runs[] | select(.conclusion == "action_required" or .status == "action_required" or .status == "waiting") | .id'
+          }
+          # GitHub creates the PR's runs a few seconds after the push. Poll for up to
+          # about 60s, then list once more to catch workflows created a beat later.
+          ids=""
+          for _ in $(seq 1 12); do
+            if ! ids=$(list 2>&1); then
+              echo "$ids"
+              echo "::warning::Could not list the runs on $VERSION_BRANCH, so the version packages PR's runs stay pending approval and its required checks never report. $grant"
+              exit 0
+            fi
+            [ -n "$ids" ] && break
+            sleep 5
+          done
+          sleep 5
+          if more=$(list 2>/dev/null); then ids=$more; fi
+          if [ -z "$ids" ]; then
+            echo "::warning::No runs on $VERSION_BRANCH at $sha were waiting for approval after 60s. If the version packages PR is still blocked, approve its runs from the Actions tab."
+            exit 0
+          fi
+          for id in $ids; do
+            if out=$(gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/approve" 2>&1); then
+              echo "Approved run $id"
+            elif grep -qiE '403|Resource not accessible' <<<"$out"; then
+              echo "$out"
+              echo "::warning::GITHUB_TOKEN may not approve run $id, so it stays pending and the version packages PR stays blocked. $grant"
+            else
+              echo "$out"
+              echo "::warning::Could not approve run $id on $VERSION_BRANCH, so it stays pending and the version packages PR stays blocked. Check that the caller grants 'actions: write'."
+            fi
+          done
