@@ -50,6 +50,80 @@ One exception: `yarn-release-changeset-monorepo.yml` publishes through Yarn
 Berry's own publisher, which has no OIDC support, so it cannot authenticate at
 all right now. Its header says so. No consumer of this repo calls it.
 
+### Caller permissions for the `-oidc` changesets workflows
+
+`pnpm-release-changeset-oidc.yml` and `bun-release-changeset-oidc.yml` declare
+no `permissions:` of their own. Grant them in the caller's job. Declaring
+`permissions:` replaces the default set, so list every scope; an unlisted scope
+drops to `none`:
+
+```yaml
+release:
+  uses: unional/.github/.github/workflows/pnpm-release-changeset-oidc.yml@v1
+  needs: [code, publish-gate]
+  permissions:
+    id-token: write
+    contents: write
+    pull-requests: write
+    actions: write
+```
+
+`actions: write` lets the workflow approve the runs GitHub parks on the
+"version packages" PR. changesets/action opens and pushes that PR with
+`GITHUB_TOKEN`, so its author is `github-actions[bot]`. GitHub creates the PR's
+`on: pull_request` runs (CI, CodeQL) but holds them as `action_required` until
+someone approves them, and a ruleset that requires their checks leaves the PR
+blocked. After changesets/action opens or updates the PR, the workflow waits up
+to about 60 seconds for those runs and approves each one. Without
+`actions: write` the release still succeeds, but it warns and the PR's runs stay
+pending.
+
+The workflows declare no `permissions:` because a block in a called workflow
+caps the token: any scope it leaves out, `actions` included, drops to `none`
+even when the caller grants it.
+
+## Publish gate
+
+`pnpm-publish-gate.yml` packs each publishable package from the working tree and
+diffs it against what is already on the registry. It lists the files with the
+tool that will publish them: `pnpm pack` when the repo uses pnpm (a `pnpm@`
+value in the root `packageManager` field, or a root `pnpm-lock.yaml`), and
+`npm pack` otherwise. The two pack differently, so listing with the wrong one
+reports false changes. Call it as a `needs:` of the release job so it runs
+immediately before `changeset publish`:
+
+```yaml
+publish-gate:
+  uses: unional/.github/.github/workflows/pnpm-publish-gate.yml@v1
+  permissions:
+    contents: read
+
+release:
+  uses: unional/.github/.github/workflows/pnpm-release-changeset-oidc.yml@v1
+  needs: [code, publish-gate]
+```
+
+It **blocks** on files that must never ship (tests, key material, env files,
+repo metadata) and on new runtime `dependencies` absent from the published
+version. It **reports without blocking** on removed dependencies and ordinary
+file churn, because failing on those would train maintainers to ignore the gate.
+
+A new runtime dependency on one of the owner's own packages is reported under
+its own heading instead of blocking. The list lives as `FIRST_PARTY` in
+`.github/scripts/publish-gate.mjs` (`@unional/*`, `@repobuddy/*`, `type-plus`,
+`unpartial`, and others). Extend it per caller with the
+`allowed-new-dependencies` input: exact package names or `@scope/*` patterns,
+one per line or comma-separated. Any other wildcard fails the gate.
+
+The gate checks out its scripts from this repo's `main`, whatever ref the caller
+pins, so a fix to the gate reaches every caller when it merges. The scripts are
+copied from `cyberuni/.github`; change them there first. The workflow header
+lists where this copy differs.
+
+Because the gate is a `needs:` of the release job, it also runs on pushes that
+only open or update the "version packages" PR. That is deliberate: it fails
+closed, and surfaces a bad tarball one merge earlier.
+
 ### Why there are two lines
 
 `changesets/action` and `@changesets/cli` are strictly paired, and the action

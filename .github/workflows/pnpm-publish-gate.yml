@@ -1,0 +1,137 @@
+name: pnpm-publish-gate
+# Inspects what a release is about to publish, against what is already on the
+# registry, and blocks the differences that are almost always a mistake or an attack.
+#
+# Call this from `release.yml` as a `needs:` of the release job, so it runs on the
+# default branch immediately before `changeset publish`. The gate is self-contained —
+# it packs the working tree and diffs that against the registry — so it needs no PR
+# context and works anywhere the built workspace exists.
+#
+# It used to be documented as a job on the changesets "Version Packages" PR, on the
+# argument that the PR is the last point where the release contents are both knowable
+# and still reviewable. That placement can never fire. A PR opened with the built-in
+# GITHUB_TOKEN does not trigger `on: pull_request` workflows, so the Version PR gets
+# zero checks and the conditional job attached to it was never once executed. A gate
+# that runs on the release is worth more than a gate that runs nowhere.
+#
+# Consequence worth knowing: because the gate is a `needs:` of release, it also runs on
+# pushes that only open or update the Version PR rather than publish. That is
+# deliberate — it fails closed, and surfaces a bad tarball one merge earlier.
+#
+# Blocks on:
+#   - files that must never ship (tests, key material, env files, repo metadata)
+#   - new runtime `dependencies` that are not in the published version, unless the
+#     dependency is on the allow-list (below)
+# Reports, without blocking:
+#   - new runtime dependencies on the allow-list, under their own heading
+#   - any other change to the tarball file list
+#
+# The allow-list is the owner's own packages, kept as `FIRST_PARTY` in
+# `.github/scripts/publish-gate.mjs` (`@unional/*`, `@repobuddy/*`, `type-plus`,
+# `unpartial`, ...). Depending on one of them is a move within the owner's own graph,
+# not a supply-chain surprise. Callers extend the list with `allowed-new-dependencies`:
+# exact package names or `@scope/*` patterns, one per line or comma-separated. Any
+# other wildcard fails the gate rather than widening it silently.
+#
+# Removed dependencies and ordinary file churn are reported only: both are normal in
+# a legitimate release, and failing on them would train maintainers to ignore the gate.
+#
+# Ported from cyberuni/.github, where it was written and proven. The scripts in
+# `.github/scripts/publish-gate*.mjs` are copied from cyberuni/.github `main`; change
+# them there first and copy them here. One difference, until cyberuni takes the same
+# fix: `packCommand` passes pnpm `--config.ignore-scripts=true` instead of
+# `--ignore-scripts`, which pnpm 10.26 through 11.x reject on `pack`, so cyberuni's copy
+# blocks every release in those repos. See the comment on `packCommand`; the test file
+# changes to match. Once cyberuni carries the fix, re-copy and drop this note.
+#
+# This workflow differs from cyberuni's copy in two deliberate ways, both to match this
+# repo's conventions:
+#   - node and pnpm are set up inline with pnpm/action-setup + actions/setup-node, as
+#     every other pnpm workflow here does. This repo has no setup-node-pnpm composite.
+#     `pnpm-version` is accepted and then unused, exactly as pnpm-verify.yml and
+#     pnpm-release-changeset-oidc.yml already do: pnpm's version comes from each
+#     consumer's `packageManager` field. The input is kept so the call signature
+#     matches cyberuni's copy and a repo can switch orgs without editing its caller.
+#   - the script checkout uses `unional/.github` at `main`. That is the ref this repo's
+#     callers actually use (every unional repo calling a workflow here pins `@main`),
+#     and the ref these workflows already use for their own composites
+#     (`setup-playwright@main`). A caller pinned to a tag still gets the scripts from
+#     `main`, so a gate fix reaches every caller as soon as it merges.
+#
+# repobuddy/.github carries a third copy whose dependency handling differs: it replaces
+# the first-party allow-list with a per-repo `.github/publish-gate.json` of
+# acknowledged dependencies. This copy follows cyberuni, because its built-in list is
+# already the unional packages.
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        required: false
+        default: lts/*
+      pnpm-version:
+        type: string
+        required: false
+      build:
+        description: Build before packing. Turn off only if the package publishes sources.
+        type: boolean
+        required: false
+        default: true
+      allowed-new-dependencies:
+        description: >-
+          Extra package names or `@scope/*` patterns whose addition as a runtime
+          dependency is reported but not blocked. Newline- or comma-separated.
+          Extends the built-in first-party list.
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The gate script lives here rather than in every caller, so every repo shares one
+      # copy and one review. Checked out to a dot-directory so it cannot be mistaken
+      # for, or picked up by, the caller's own tooling. `main`, not a tag: see the header.
+      - uses: actions/checkout@v7
+        with:
+          repository: unional/.github
+          ref: main
+          path: .publish-gate
+
+      - uses: pnpm/action-setup@v6
+
+      - name: Use Node.js ${{ inputs.node-version }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      # The gate lists what would ship from the working tree with `pnpm pack` (or
+      # `npm pack` in a repo without pnpm), so the build output has to exist or the
+      # gate inspects an empty package and calls it clean.
+      - name: Build
+        if: inputs.build
+        run: pnpm build
+
+      - name: Gate
+        run: node .publish-gate/.github/scripts/publish-gate-cli.mjs
+        env:
+          PUBLISH_GATE_ALLOWED_DEPENDENCIES: ${{ inputs.allowed-new-dependencies }}
+
+      # The report is the point of the job, so publish it even when the gate blocks.
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: publish-gate-report
+          path: publish-gate-report.md
+          if-no-files-found: ignore
